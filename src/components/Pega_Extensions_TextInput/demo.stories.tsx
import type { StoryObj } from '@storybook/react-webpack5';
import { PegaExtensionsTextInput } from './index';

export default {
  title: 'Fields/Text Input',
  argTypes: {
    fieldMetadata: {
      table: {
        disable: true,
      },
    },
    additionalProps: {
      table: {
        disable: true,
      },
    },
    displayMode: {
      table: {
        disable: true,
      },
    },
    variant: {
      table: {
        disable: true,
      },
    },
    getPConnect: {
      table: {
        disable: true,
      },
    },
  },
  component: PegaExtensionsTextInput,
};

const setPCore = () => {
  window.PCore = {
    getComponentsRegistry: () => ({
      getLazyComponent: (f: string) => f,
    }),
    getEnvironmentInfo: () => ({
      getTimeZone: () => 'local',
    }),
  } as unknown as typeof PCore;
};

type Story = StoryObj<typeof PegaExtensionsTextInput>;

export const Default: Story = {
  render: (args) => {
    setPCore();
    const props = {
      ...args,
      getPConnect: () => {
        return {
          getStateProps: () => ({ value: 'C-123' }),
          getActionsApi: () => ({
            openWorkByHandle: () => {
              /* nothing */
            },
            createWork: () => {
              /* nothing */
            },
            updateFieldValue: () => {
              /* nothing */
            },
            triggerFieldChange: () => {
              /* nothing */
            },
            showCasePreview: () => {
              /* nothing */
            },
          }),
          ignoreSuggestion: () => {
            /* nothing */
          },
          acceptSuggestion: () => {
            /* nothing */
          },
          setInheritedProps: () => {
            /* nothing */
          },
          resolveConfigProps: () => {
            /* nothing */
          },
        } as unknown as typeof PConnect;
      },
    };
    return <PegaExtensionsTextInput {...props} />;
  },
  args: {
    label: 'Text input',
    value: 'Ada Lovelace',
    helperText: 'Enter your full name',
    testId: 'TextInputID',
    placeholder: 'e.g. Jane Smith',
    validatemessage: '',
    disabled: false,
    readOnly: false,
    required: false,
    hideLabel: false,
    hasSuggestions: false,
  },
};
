@@ -1,0 +1,13 @@
+import React from 'react';
+import { render, screen } from '@testing-library/react';
+import { composeStories } from '@storybook/react';
+import * as DemoStories from './demo.stories';
+
+const { Default } = composeStories(DemoStories);
+
+test('renders Text Input component with default args', async () => {
+  render(<Default />);
+  expect(await screen.findByText('Text input')).toBeVisible();
+  expect(await screen.findByText('Enter your full name')).toBeVisible();
+  expect(await screen.findByTestId('TextInputID')).toBeVisible();
+});

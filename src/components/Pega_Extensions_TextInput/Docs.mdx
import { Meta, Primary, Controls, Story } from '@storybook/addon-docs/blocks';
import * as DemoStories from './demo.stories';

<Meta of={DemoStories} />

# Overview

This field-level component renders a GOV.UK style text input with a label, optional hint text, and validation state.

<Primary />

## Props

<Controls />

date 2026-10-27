@@ -1,0 +1,14 @@
+import { Meta, Primary, Controls, Story } from '@storybook/addon-docs/blocks';
+import * as DemoStories from './demo.stories';
+
+<Meta of={DemoStories} />
+
+# Overview
+
+This field-level component renders a GOV.UK style text input with a label, optional hint text, and validation state.
+
+<Primary />
+
+## Props
+
+<Controls />

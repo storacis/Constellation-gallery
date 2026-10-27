@@ -1,0 +1,119 @@
+import { useEffect, useState, type ChangeEvent } from 'react';
+import { withConfiguration, Input, Text } from '@pega/cosmos-react-core';
+import styled from 'styled-components';
+import '../shared/create-nonce';
+
+const GovUkTextInputWrapper = styled.div`
+  width: 100%;
+  max-width: 40rem;
+`;
+
+export type TextInputProps = {
+  getPConnect: () => typeof PConnect;
+  label: string;
+  value?: string;
+  helperText?: string;
+  placeholder?: string;
+  validatemessage?: string;
+  hideLabel?: boolean;
+  disabled?: boolean;
+  readOnly?: boolean;
+  required?: boolean;
+  testId?: string;
+  fieldMetadata?: any;
+  additionalProps?: any;
+  displayMode?: 'DISPLAY_ONLY' | '';
+  hasSuggestions?: boolean;
+};
+
+export const PegaExtensionsTextInput = (props: TextInputProps) => {
+  const {
+    getPConnect,
+    placeholder,
+    validatemessage = '',
+    label,
+    hideLabel = false,
+    helperText = '',
+    testId = '',
+    fieldMetadata,
+    additionalProps,
+    displayMode,
+    hasSuggestions,
+  } = props;
+
+  const pConn = getPConnect();
+  const actions = pConn.getActionsApi();
+  const propName = pConn.getStateProps().value;
+  const maxLength = fieldMetadata?.maxLength;
+
+  let { readOnly, required, disabled } = props;
+  const { value } = props;
+  [readOnly, required, disabled] = [readOnly, required, disabled].map(
+    (prop) => prop === true || (typeof prop === 'string' && prop === 'true'),
+  );
+
+  const [inputValue, setInputValue] = useState(value ?? '');
+  const [status, setStatus] = useState(hasSuggestions ? 'pending' : undefined);
+
+  useEffect(() => setInputValue(value ?? ''), [value]);
+
+  useEffect(() => {
+    if (validatemessage !== '') {
+      setStatus('error');
+      return;
+    }
+
+    if (hasSuggestions) {
+      setStatus('pending');
+      return;
+    }
+
+    setStatus(undefined);
+  }, [validatemessage, hasSuggestions]);
+
+  const displayComp = value ?? '';
+  if (displayMode === 'DISPLAY_ONLY') {
+    return <Text>{displayComp}</Text>;
+  }
+
+  return (
+    <GovUkTextInputWrapper>
+      <Input
+        {...additionalProps}
+        type='text'
+        label={label}
+        labelHidden={hideLabel}
+        info={validatemessage || helperText}
+        data-testid={testId}
+        value={inputValue}
+        status={status}
+        placeholder={placeholder}
+        disabled={disabled}
+        readOnly={readOnly}
+        required={required}
+        maxLength={maxLength}
+        onChange={(event: ChangeEvent<HTMLInputElement>) => {
+          if (hasSuggestions) {
+            setStatus(undefined);
+          }
+          const nextValue = event.currentTarget.value;
+          setInputValue(nextValue);
+          if (value !== nextValue && !readOnly) {
+            actions.updateFieldValue(propName, nextValue);
+          }
+        }}
+        onBlur={(event: ChangeEvent<HTMLInputElement>) => {
+          if (!readOnly) {
+            const nextValue = event.currentTarget.value;
+            actions.triggerFieldChange(propName, nextValue);
+            if (hasSuggestions) {
+              pConn.ignoreSuggestion();
+            }
+          }
+        }}
+      />
+    </GovUkTextInputWrapper>
+  );
+};
+
+export default withConfiguration(PegaExtensionsTextInput);
